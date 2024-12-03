@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:acousti_care_frontend/home_page.dart';
 import 'package:acousti_care_frontend/views/images.dart';
-import 'package:acousti_care_frontend/views/profilePages/profile_setup.dart';
+import 'package:acousti_care_frontend/views/profile/profile_setup.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
 import 'package:flutter/material.dart';
-import 'package:cache_manager/cache_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FlashPage extends StatefulWidget {
   const FlashPage({super.key});
@@ -28,23 +28,24 @@ class _FlashPageState extends State<FlashPage> with SingleTickerProviderStateMix
     _opacityAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(_controller);
     _controller.forward();
-    Timer(const Duration(seconds: 3), initiateCache);
+    Timer(const Duration(seconds: 3), _checkProfileSetup);
   }
 
-  Future<void> initiateCache() async {
+  Future<void> _checkProfileSetup() async {
     if (!mounted) return;
 
-    String? activeProfileId = await ReadCache.getString(key: "activeProfileId");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isProfileSetup = prefs.getBool('isProfileSetup') ?? false;
 
-    if (activeProfileId == null) {
+    if (isProfileSetup) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ProfileSetup(isAddingNewProfile: false)),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const ProfileSetup(isAddingNewProfile: false)),
       );
     }
   }
@@ -84,3 +85,4 @@ class _FlashPageState extends State<FlashPage> with SingleTickerProviderStateMix
     super.dispose();
   }
 }
+

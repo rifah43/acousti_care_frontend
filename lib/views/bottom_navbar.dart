@@ -1,10 +1,11 @@
-import 'package:acousti_care_frontend/home_page.dart';
-import 'package:acousti_care_frontend/views/profileManagement/user_profile.dart';
-import 'package:acousti_care_frontend/views/profilePages/profile_setup.dart';
+import 'package:acousti_care_frontend/views/profile/user_profile.dart';
+import 'package:acousti_care_frontend/views/profile/profile_setup.dart';
 import 'package:acousti_care_frontend/views/recommendationPages/recommendation_page.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
 import 'package:acousti_care_frontend/views/trendPages/trend_page.dart';
 import 'package:flutter/material.dart';
+
+import '../home_page.dart';
 
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({super.key});
@@ -98,3 +99,4 @@ class _BottomNavbarState extends State<BottomNavbar> {
     );
   }
 }
+

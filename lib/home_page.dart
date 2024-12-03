@@ -6,7 +6,11 @@ import 'package:acousti_care_frontend/views/drawerPages/notification_page.dart';
 import 'package:acousti_care_frontend/views/drawerPages/switchProfile.dart';
 import 'package:acousti_care_frontend/views/drawerPages/terms_and_privacy.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
+import 'package:acousti_care_frontend/views/dashboard/dashboard.dart';
+import 'package:acousti_care_frontend/views/voiceRecorder/record_voice.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:acousti_care_frontend/providers/user_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,9 +22,12 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final userName = userProvider.currentUser?.name ?? 'User';
+
     return Scaffold(
-      appBar: const CustomTopBar(
-        title: "Home Page",
+      appBar: CustomTopBar(
+        title: "Welcome, $userName",
         hasDrawer: true,
         hasSettings: true,
         withBack: false,
@@ -29,13 +36,13 @@ class HomePageState extends State<HomePage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: AppColors.backgroundPrimary,
               ),
               child: Text(
-                'User Name',
-                style: TextStyle(
+                userName,
+                style: const TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 24,
                 ),
@@ -82,7 +89,7 @@ class HomePageState extends State<HomePage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.policy),
+              leading: const Icon(Icons.switch_account),
               title: const Text("Switch Profile"),
               onTap: () {
                 Navigator.push(
@@ -94,22 +101,34 @@ class HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 20), 
+            const SizedBox(height: 20),
             Text(
               'Welcome to AcoustiCare!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: titleStyle(context, AppColors.textPrimary),
             ),
-            SizedBox(height: 20),
-            // Add your RecordVoice widget or other widgets here
-            SizedBox(height: 20), 
+            const SizedBox(height: 20),
+            const Dashboard(),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RecordVoice()),
+                );
+              },
+              style: primaryButtonStyle(),
+              child: const Text('Record Voice'),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavbar(), // Ensure BottomNavbar is properly implemented
+      bottomNavigationBar: const BottomNavbar(),
     );
   }
 }
+

@@ -58,9 +58,9 @@ class ApiProvider {
     }
   }
 
-Future<http.Response> uploadAudioFile(String endpoint, File audioFile) async {
-  final url = Uri.parse('$_baseUrl/$endpoint');
-  try {
+  Future<http.Response> uploadAudioFile(String endpoint, File audioFile) async {
+    final url = Uri.parse('$_baseUrl/$endpoint');
+    try {
       var request = http.MultipartRequest('POST', url);
       request.files.add(await http.MultipartFile.fromPath(
         'audioFile', 
@@ -76,25 +76,10 @@ Future<http.Response> uploadAudioFile(String endpoint, File audioFile) async {
     }
   }
 
-// List<String>? _getMimeType(String path) {
-//   final extension = path.split('.').last.toLowerCase();
-//   switch (extension) {
-//     case 'wav':
-//       return ['audio', 'wav'];
-//     case 'mp3':
-//       return ['audio', 'mpeg'];
-//     case 'aac':
-//       return ['audio', 'aac'];
-//     // Add more formats as needed
-//     default:
-//       return null; 
-//   }
-// }
-
-void _handleResponse(http.Response response) {
-  if (response.statusCode < 200 || response.statusCode >= 300) {
-    throw Exception('Error: ${response.statusCode} ${response.body}');
+  void _handleResponse(http.Response response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Error: ${response.statusCode} ${response.body}');
+    }
   }
 }
 
-}

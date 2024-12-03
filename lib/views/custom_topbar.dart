@@ -1,7 +1,6 @@
-// import 'package:acousti_care_frontend/home_page.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
 import 'package:flutter/material.dart';
-import 'package:acousti_care_frontend/views/settings/settings.dart'; // Ensure correct import path
+import 'package:acousti_care_frontend/views/settings/settings_page.dart';
 
 class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -30,14 +29,13 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: AppColors.backgroundSecondary,
       elevation: 4.0,
       leading: Row(
-        mainAxisSize:
-            MainAxisSize.min, 
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (withBack)
             IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
-                Navigator.pop(context); 
+                Navigator.pop(context);
               },
             ),
           if (hasDrawer)
@@ -45,7 +43,7 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
               builder: (context) => IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () {
-                  Scaffold.of(context).openDrawer(); // Open the drawer
+                  Scaffold.of(context).openDrawer();
                 },
               ),
             ),
@@ -56,9 +54,9 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const Settings()),
+                    MaterialPageRoute(builder: (context) => const SettingsPage()),
                   );
                 },
               ),
@@ -70,3 +68,4 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
+
