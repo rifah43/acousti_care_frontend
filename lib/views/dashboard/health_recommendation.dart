@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:acousti_care_frontend/providers/health_data_provider.dart';
 
 class HealthRecommendations extends StatelessWidget {
-  const HealthRecommendations({Key? key}) : super(key: key);
+  const HealthRecommendations({super.key});
 
   @override
   Widget build(BuildContext context) {

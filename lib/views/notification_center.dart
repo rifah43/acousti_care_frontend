@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:acousti_care_frontend/providers/notification_provider.dart';
 
 class NotificationCenter extends StatelessWidget {
-  const NotificationCenter({Key? key}) : super(key: key);
+  const NotificationCenter({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:acousti_care_frontend/models/notification.dart';
 
 class NotificationProvider with ChangeNotifier {
-  List<Notification> _notifications = [];
+  final List<Notification> _notifications = [];
   int _unreadCount = 0;
 
   List<Notification> get notifications => _notifications;

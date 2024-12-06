@@ -106,9 +106,14 @@ class HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            Text(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
               'Welcome to AcoustiCare!',
               style: titleStyle(context, AppColors.textPrimary),
+            ),
+              ],
             ),
             const SizedBox(height: 20),
             const Dashboard(),

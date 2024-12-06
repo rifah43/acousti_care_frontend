@@ -5,7 +5,7 @@ import 'package:acousti_care_frontend/providers/user_provider.dart';
 import 'package:acousti_care_frontend/views/custom_topbar.dart';
 
 class UserProfile extends StatelessWidget {
-  const UserProfile({Key? key}) : super(key: key);
+  const UserProfile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class UserProfile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
+                  const Center(
                     child: CircleAvatar(
                       radius: 50,
                       backgroundImage: AssetImage('assets/images/profile_placeholder.png'),

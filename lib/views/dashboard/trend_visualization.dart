@@ -5,7 +5,7 @@ import 'package:acousti_care_frontend/providers/health_data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class TrendVisualization extends StatelessWidget {
-  const TrendVisualization({Key? key}) : super(key: key);
+  const TrendVisualization({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +23,8 @@ class TrendVisualization extends StatelessWidget {
               height: 200,
               child: LineChart(
                 LineChartData(
-                  gridData: FlGridData(show: false),
-                  titlesData: FlTitlesData(show: false),
+                  gridData: const FlGridData(show: false),
+                  titlesData: const FlTitlesData(show: false),
                   borderData: FlBorderData(show: false),
                   minX: 0,
                   maxX: 6,
@@ -39,7 +39,7 @@ class TrendVisualization extends StatelessWidget {
                       color: AppColors.buttonPrimary,
                       barWidth: 3,
                       isStrokeCapRound: true,
-                      dotData: FlDotData(show: false),
+                      dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(show: false),
                     ),
                   ],
