@@ -81,22 +81,29 @@ class _ProfileSetupState extends State<ProfileSetup> {
   }
 
   void _saveProfile() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final profileData = _getProfileData();
-    
-    userProvider.setCurrentUser(profileData as User);
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isProfileSetup', true);
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const HomePage(),
-      ),
-    );
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  final profileData = _getProfileData();
+  if (profileData is Map<String, dynamic>) {
+    final user = User.fromJson(profileData);
+    print(user);
+    userProvider.setCurrentUser(user);
+  } else {
+    print("Error: profileData is not a Map<String, dynamic>");
+    return;
   }
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('isProfileSetup', true);
+
+  if (!mounted) return;
+
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute(
+      builder: (context) => const HomePage(),
+    ),
+  );
+}
+
 
   Map<String, dynamic> _getProfileData() {
     final weight = double.tryParse(_weightController.text.trim()) ?? 0.0;

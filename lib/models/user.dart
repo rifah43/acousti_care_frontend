@@ -1,5 +1,4 @@
 class User {
-  final String id;
   final String name;
   final int age;
   final String gender;
@@ -9,7 +8,6 @@ class User {
   final String email;
 
   User({
-    required this.id,
     required this.name,
     required this.age,
     required this.gender,
@@ -20,21 +18,29 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'],
-      name: json['name'],
-      age: json['age'],
-      gender: json['gender'],
-      height: json['height'].toDouble(),
-      weight: json['weight'].toDouble(),
-      bmi: json['bmi'].toDouble(),
-      email: json['email'],
-    );
+  return User(
+    name: json['name'] ?? '',
+    age: _parseInt(json['age']),
+    gender: json['gender'] ?? '',
+    height: json['height']?.toDouble() ?? 0.0,
+    weight: json['weight']?.toDouble() ?? 0.0,
+    bmi: json['bmi']?.toDouble() ?? 0.0,
+    email: json['email'] ?? '',
+  );
+}
+
+static int _parseInt(dynamic value) {
+  if (value == null) return 0;
+  try {
+    return int.parse(value.toString());
+  } catch (e) {
+    return 0; // Default value in case of an error
   }
+}
+
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'name': name,
       'age': age,
       'gender': gender,
