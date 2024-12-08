@@ -30,24 +30,115 @@ class _ProfileSetupState extends State<ProfileSetup> {
   final TextEditingController _heightController = TextEditingController();
   String _gender = 'Select Gender';
 
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Name is required';
+    }
+    if (value.length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+      return 'Name should only contain letters and spaces';
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validateAge(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Age is required';
+    }
+    final age = int.tryParse(value);
+    if (age == null) {
+      return 'Please enter a valid number';
+    }
+    if (age < 12 || age > 120) {
+      return 'Age must be between 18 and 120';
+    }
+    return null;
+  }
+
+  String? _validateWeight(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Weight is required';
+    }
+    final weight = double.tryParse(value);
+    if (weight == null) {
+      return 'Please enter a valid number';
+    }
+    if (weight < 10 || weight > 600) {
+      return 'Weight must be between 20 and 300 kg';
+    }
+    return null;
+  }
+
+  String? _validateHeight(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Height is required';
+    }
+    final height = double.tryParse(value);
+    if (height == null) {
+      return 'Please enter a valid number';
+    }
+    if (height < 80 || height > 350) {
+      return 'Height must be between 100 and 250 cm';
+    }
+    return null;
+  }
+
+  String? _validateGender(String? value) {
+    if (value == null || value.isEmpty || value == 'Select Gender') {
+      return 'Please select a gender';
+    }
+    return null;
+  }
+
+
   void _nextPage() {
     if (_currentPage == -1) {
       setState(() => _currentPage = 0);
     } else if (_currentPage == 0) {
-      final name = _nameController.text.trim();
-      final age = _ageController.text.trim();
+      final nameValidation = _validateName(_nameController.text.trim());
+      final ageValidation = _validateAge(_ageController.text.trim());
+      final emailValidation = _validateEmail(_mailController.text.trim());
 
-      if (name.isEmpty || age.isEmpty) {
-        _showSnackBar('Please enter your name and age');
+      if (nameValidation != null) {
+        _showSnackBar(nameValidation);
+        return;
+      }
+      if (ageValidation != null) {
+        _showSnackBar(ageValidation);
+        return;
+      }
+      if (emailValidation != null) {
+        _showSnackBar(emailValidation);
         return;
       }
       _goToNextPage();
     } else if (_currentPage == 1) {
-      final weight = double.tryParse(_weightController.text.trim()) ?? 0.0;
-      final height = double.tryParse(_heightController.text.trim()) ?? 0.0;
+      final weightValidation = _validateWeight(_weightController.text.trim());
+      final heightValidation = _validateHeight(_heightController.text.trim());
+      final genderValidation = _validateGender(_gender);
 
-      if (weight <= 0 || height <= 0 || _gender.isEmpty) {
-        _showSnackBar('Please enter your weight, height, and select your gender');
+      if (weightValidation != null) {
+        _showSnackBar(weightValidation);
+        return;
+      }
+      if (heightValidation != null) {
+        _showSnackBar(heightValidation);
+        return;
+      }
+      if (genderValidation != null) {
+        _showSnackBar(genderValidation);
         return;
       }
       _goToNextPage();
@@ -80,30 +171,56 @@ class _ProfileSetupState extends State<ProfileSetup> {
     );
   }
 
-  void _saveProfile() async {
-  final userProvider = Provider.of<UserProvider>(context, listen: false);
-  final profileData = _getProfileData();
-  if (profileData is Map<String, dynamic>) {
-    final user = User.fromJson(profileData);
-    print(user);
-    userProvider.setCurrentUser(user);
-  } else {
-    print("Error: profileData is not a Map<String, dynamic>");
-    return;
+void _saveProfile() async {
+    // Perform final validation of all fields
+    final nameValidation = _validateName(_nameController.text.trim());
+    final ageValidation = _validateAge(_ageController.text.trim());
+    final emailValidation = _validateEmail(_mailController.text.trim());
+    final weightValidation = _validateWeight(_weightController.text.trim());
+    final heightValidation = _validateHeight(_heightController.text.trim());
+    final genderValidation = _validateGender(_gender);
+
+    // Check if any validation fails
+    if (nameValidation != null || 
+        ageValidation != null || 
+        emailValidation != null ||
+        weightValidation != null || 
+        heightValidation != null || 
+        genderValidation != null) {
+      _showSnackBar('Please check all fields are valid');
+      return;
+    }
+
+    final summaryPage = SummaryPage(
+      name: _nameController.text.trim(),
+      age: _ageController.text.trim(),
+      weight: double.tryParse(_weightController.text.trim()) ?? 0.0,
+      height: double.tryParse(_heightController.text.trim()) ?? 0.0,
+      gender: _gender,
+      mail: _mailController.text.trim(),
+      bmi: _calculateBMI(),
+    );
+    
+    final result = await summaryPage.createUser(context);
+    
+    if (result['success']) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final profileData = _getProfileData();
+      final user = User.fromJson(profileData);
+      userProvider.setCurrentUser(user);
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isProfileSetup', true);
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const HomePage(),
+        ),
+      );
+    }
   }
-
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setBool('isProfileSetup', true);
-
-  if (!mounted) return;
-
-  Navigator.of(context).pushReplacement(
-    MaterialPageRoute(
-      builder: (context) => const HomePage(),
-    ),
-  );
-}
-
 
   Map<String, dynamic> _getProfileData() {
     final weight = double.tryParse(_weightController.text.trim()) ?? 0.0;
@@ -155,7 +272,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
                             setState(() => _gender = newGender);
                           },
                         ),
-                        SummaryPage(
+                         SummaryPage(
                           name: _nameController.text.trim(),
                           age: _ageController.text.trim(),
                           weight: double.tryParse(_weightController.text.trim()) ?? 0.0,
@@ -234,4 +351,3 @@ class _ProfileSetupState extends State<ProfileSetup> {
     );
   }
 }
-

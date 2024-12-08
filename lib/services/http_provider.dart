@@ -1,17 +1,30 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class ApiProvider {
-  final String _baseUrl = dotenv.env['API_BASE_URL'] ?? '';
+  static const int timeoutDuration = 10; 
+  
+  String get _baseUrl {
+    final url = dotenv.env['API_BASE_URL'];
+    if (url == null || url.isEmpty) {
+      throw Exception('API_BASE_URL not found in environment variables');
+    }
+    return url;
+  }
 
   Future<http.Response> getRequest(String endpoint) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
-      final response = await http.get(url);
-      _handleResponse(response);
-      return response;
+      final response = await http.get(url)
+          .timeout(const Duration(seconds: timeoutDuration));
+      return _handleResponse(response);
+    } on SocketException catch (e) {
+      throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
+    } on TimeoutException {
+      throw Exception('Request timed out: Server is not responding');
     } catch (e) {
       throw Exception('Failed to make GET request: $e');
     }
@@ -20,13 +33,28 @@ class ApiProvider {
   Future<http.Response> postRequest(String endpoint, Map<String, dynamic> data) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
+      print('Making POST request to: $url');
+      print('Request body: ${jsonEncode(data)}');
+      
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
         body: jsonEncode(data),
-      );
-      _handleResponse(response);
-      return response;
+      ).timeout(const Duration(seconds: timeoutDuration));
+      
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+      return _handleResponse(response);
+    } on SocketException catch (e) {
+      throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
+    } on TimeoutException {
+      throw Exception('Request timed out: Server is not responding');
+    } on FormatException catch (e) {
+      throw Exception('Data format error: ${e.message}');
     } catch (e) {
       throw Exception('Failed to make POST request: $e');
     }
@@ -37,11 +65,17 @@ class ApiProvider {
     try {
       final response = await http.put(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
         body: jsonEncode(data),
-      );
-      _handleResponse(response);
-      return response;
+      ).timeout(const Duration(seconds: timeoutDuration));
+      return _handleResponse(response);
+    } on SocketException catch (e) {
+      throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
+    } on TimeoutException {
+      throw Exception('Request timed out: Server is not responding');
     } catch (e) {
       throw Exception('Failed to make PUT request: $e');
     }
@@ -50,9 +84,13 @@ class ApiProvider {
   Future<http.Response> deleteRequest(String endpoint) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
-      final response = await http.delete(url);
-      _handleResponse(response);
-      return response;
+      final response = await http.delete(url)
+          .timeout(const Duration(seconds: timeoutDuration));
+      return _handleResponse(response);
+    } on SocketException catch (e) {
+      throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
+    } on TimeoutException {
+      throw Exception('Request timed out: Server is not responding');
     } catch (e) {
       throw Exception('Failed to make DELETE request: $e');
     }
@@ -67,19 +105,49 @@ class ApiProvider {
         audioFile.path,
       ));
 
-      var streamedResponse = await request.send();
+      var streamedResponse = await request.send()
+          .timeout(const Duration(seconds: timeoutDuration * 2)); // Longer timeout for file upload
       var response = await http.Response.fromStream(streamedResponse);
-      _handleResponse(response);
-      return response;
+      return _handleResponse(response);
+    } on SocketException catch (e) {
+      throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
+    } on TimeoutException {
+      throw Exception('Request timed out: Server is not responding');
     } catch (e) {
       throw Exception('Failed to upload audio file: $e');
     }
   }
 
-  void _handleResponse(http.Response response) {
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Error: ${response.statusCode} ${response.body}');
+  http.Response _handleResponse(http.Response response) {
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+    
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response;
+    }
+
+    switch (response.statusCode) {
+      case 400:
+        throw Exception('Bad request: ${_parseErrorMessage(response.body)}');
+      case 401:
+        throw Exception('Unauthorized: Please log in again');
+      case 403:
+        throw Exception('Forbidden: You don\'t have permission to access this resource');
+      case 404:
+        throw Exception('Not found: The requested resource doesn\'t exist');
+      case 500:
+        throw Exception('Server error: Please try again later');
+      default:
+        throw Exception('Error ${response.statusCode}: ${_parseErrorMessage(response.body)}');
+    }
+  }
+
+  String _parseErrorMessage(String body) {
+    try {
+      final parsed = jsonDecode(body);
+      return parsed['message'] ?? parsed['error'] ?? body;
+    } catch (e) {
+      return body;
     }
   }
 }
-

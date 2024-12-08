@@ -1,3 +1,4 @@
+import 'package:acousti_care_frontend/home_page.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:acousti_care_frontend/views/settings/settings_page.dart';
@@ -35,7 +36,11 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
             IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const HomePage(),
+                  ),
+                );
               },
             ),
           if (hasDrawer)
@@ -56,7 +61,8 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SettingsPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsPage()),
                   );
                 },
               ),
@@ -68,4 +74,3 @@ class CustomTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
-

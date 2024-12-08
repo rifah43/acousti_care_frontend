@@ -102,38 +102,38 @@ class HomePageState extends State<HomePage> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 800),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                const SizedBox(height: 20),
                 Text(
-              'Welcome to AcoustiCare!',
-              style: titleStyle(context, AppColors.textPrimary),
-            ),
+                  'Welcome to AcoustiCare!',
+                  style: titleStyle(context, AppColors.textPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                const Dashboard(),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RecordVoice()),
+                    );
+                  },
+                  style: primaryButtonStyle(),
+                  child: const Text('Record Voice'),
+                ),
+                const SizedBox(height: 20),
               ],
             ),
-            const SizedBox(height: 20),
-            const Dashboard(),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const RecordVoice()),
-                );
-              },
-              style: primaryButtonStyle(),
-              child: const Text('Record Voice'),
-            ),
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: const BottomNavbar(),
     );
   }
 }
-

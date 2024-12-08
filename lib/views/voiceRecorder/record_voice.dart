@@ -45,13 +45,11 @@ class _RecordVoiceState extends State<RecordVoice> {
   Future<void> _stopRecording() async {
     if (isRecording) {
       String? filePath = await _audioRecorder.stop();
-      if (filePath != null) {
-        setState(() {
-          isRecording = false;
-          recPath = filePath; // Keep the recorded file path
-        });
-      }
-    }
+      setState(() {
+        isRecording = false;
+        recPath = filePath; // Keep the recorded file path
+      });
+        }
   }
 
   Future<void> _uploadAudio() async {

@@ -1,8 +1,8 @@
+import 'package:acousti_care_frontend/views/dashboard/health_recommendation.dart';
+import 'package:acousti_care_frontend/views/dashboard/trend_visualization.dart';
 import 'package:acousti_care_frontend/views/profile/user_profile.dart';
 import 'package:acousti_care_frontend/views/profile/profile_setup.dart';
-import 'package:acousti_care_frontend/views/recommendationPages/recommendation_page.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
-import 'package:acousti_care_frontend/views/trendPages/trend_page.dart';
 import 'package:flutter/material.dart';
 
 import '../home_page.dart';
@@ -28,13 +28,13 @@ class _BottomNavbarState extends State<BottomNavbar> {
         page = const HomePage();
         break;
       case 1:
-        page = const TrendPage();
+        page = const TrendVisualization();
         break;
       case 2:
         page = const ProfileSetup(isAddingNewProfile: true);
         break;
       case 3:
-        page = const RecommendationPage();
+        page = const HealthRecommendations();
         break;
       case 4:
         page = const UserProfile();

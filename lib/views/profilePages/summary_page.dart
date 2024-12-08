@@ -1,6 +1,4 @@
 import 'dart:convert';
-
-import 'package:acousti_care_frontend/home_page.dart';
 import 'package:acousti_care_frontend/services/http_provider.dart';
 import 'package:cache_manager/cache_manager.dart';
 import 'package:flutter/material.dart';
@@ -27,13 +25,11 @@ class SummaryPage extends StatelessWidget {
     super.key,
   });
 
-  Future<void> saveCache(
-    String activeProfileId
-  ) async {
-    WriteCache.setString(key: "activeProfileId", value: activeProfileId);
+  Future<void> saveCache(String activeProfileId) async {
+    await WriteCache.setString(key: "activeProfileId", value: activeProfileId);
   }
 
-  Future<void> _createUser(BuildContext context) async {
+  Future<Map<String, dynamic>> createUser(BuildContext context) async {
     final Map<String, dynamic> profileData = {
       'name': name,
       'age': int.parse(age),
@@ -47,21 +43,26 @@ class SummaryPage extends StatelessWidget {
 
     try {
       final response = await ApiProvider().postRequest('add-profile', profileData);
-      final responsebody = jsonDecode(response.body);
+      final responseBody = jsonDecode(response.body);
+      
       if (response.statusCode == 201) {
-        _showSnackBar(context, 'Profile created successfully!', AppColors.success);
-        saveCache(responsebody[0]["user_id"]);
-        Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
-      } else if (response.statusCode == 400) {
-        _showSnackBar(context, responsebody[0]["message"], AppColors.alert);
+        final userId = responseBody['user_id'];
+        if (userId != null) {
+          await saveCache(userId.toString());
+          _showSnackBar(context, 'Profile created successfully!', AppColors.success);
+          return {'success': true, 'message': 'Profile created successfully'};
+        } else {
+          _showSnackBar(context, 'Invalid response format from server', AppColors.error);
+          return {'success': false, 'message': 'Invalid response format'};
+        }
       } else {
-        _showSnackBar(context, 'Error creating profile.', AppColors.error);
+        final errorMessage = responseBody['message'] ?? 'Error creating profile';
+        _showSnackBar(context, errorMessage, AppColors.error);
+        return {'success': false, 'message': errorMessage};
       }
     } catch (e) {
       _showSnackBar(context, 'Error: $e', AppColors.error);
+      return {'success': false, 'message': e.toString()};
     }
   }
 
@@ -122,13 +123,6 @@ class SummaryPage extends StatelessWidget {
                     label: 'BMI',
                     value: bmi!.toStringAsFixed(1),
                   ),
-                const SizedBox(height: 30),
-                ElevatedButton.icon(
-                  onPressed: () => _createUser(context),
-                  style: secondaryButtonStyle(),
-                  icon: const Icon(Icons.check_circle, color: Colors.white),
-                  label: const Text('Add Profile'),
-                ),
               ],
             ),
           ),
@@ -137,7 +131,11 @@ class SummaryPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryRow(BuildContext context, {required IconData icon, required String label, required String value}) {
+  Widget _buildSummaryRow(BuildContext context, {
+    required IconData icon, 
+    required String label, 
+    required String value
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -145,14 +143,14 @@ class SummaryPage extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.textPrimary, size: 20),
           const SizedBox(width: 12),
-          Expanded( // Use Expanded to ensure proper space allocation
+          Expanded(
             flex: 1,
             child: Text(
               '$label: ',
               style: subtitleStyle(context, AppColors.textPrimary),
             ),
           ),
-          Expanded( // Use another Expanded for the value
+          Expanded(
             flex: 2,
             child: Text(
               value,
