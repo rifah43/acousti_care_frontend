@@ -76,26 +76,26 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildDashboardContent() {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
+    return const SingleChildScrollView(
+      physics: AlwaysScrollableScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Your Health Dashboard',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 24),
-            const RiskPrediction(),
-            const SizedBox(height: 24),
-            const TrendVisualization(),
-            const SizedBox(height: 24),
-            const HealthRecommendations(),
+            SizedBox(height: 24),
+            RiskPrediction(),
+            SizedBox(height: 24),
+            TrendVisualization(),
+            SizedBox(height: 24),
+            HealthRecommendations(),
           ],
         ),
       ),

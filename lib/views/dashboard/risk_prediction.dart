@@ -4,7 +4,7 @@ import 'package:acousti_care_frontend/providers/health_data_provider.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
 
 class RiskPrediction extends StatelessWidget {
-  const RiskPrediction({Key? key}) : super(key: key);
+  const RiskPrediction({super.key});
 
   Color _getRiskColor(double percentage) {
     if (percentage < 25) return AppColors.success;
