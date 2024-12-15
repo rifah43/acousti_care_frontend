@@ -10,14 +10,18 @@ dependencies:
   flutter:
     sdk: flutter
   permission_handler: ^11.0.0
-  flutter_sound: ^9.2.13
-  record: ^5.1.2
+  record: ^4.4.4 
   just_audio: ^0.9.41
-  path_provider: ^2.1.4
+  path_provider: ^2.0.15
+  provider: ^6.0.5 
+  path: ^1.8.3
   http: ^1.2.2
   flutter_dotenv: ^5.0.2
   cupertino_icons: ^1.0.6
   cache_manager: ^1.0.0+4
+  device_info_plus: ^9.0.0
+  shared_preferences: ^2.2.0
+  uuid: ^3.0.7
   font_awesome_flutter: ^10.7.0
   fl_chart: ^0.69.2
   html: ^0.15.0

@@ -15,10 +15,10 @@ class ApiProvider {
     return url;
   }
 
-  Future<http.Response> getRequest(String endpoint) async {
+  Future<http.Response> getRequest(String endpoint, {Map<String, String>? headers}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
-      final response = await http.get(url)
+      final response = await http.get(url, headers: headers)
           .timeout(const Duration(seconds: timeoutDuration));
       return _handleResponse(response);
     } on SocketException catch (e) {
@@ -30,7 +30,8 @@ class ApiProvider {
     }
   }
 
-  Future<http.Response> postRequest(String endpoint, Map<String, dynamic> data) async {
+  /// POST request
+  Future<http.Response> postRequest(String endpoint, Map<String, dynamic> data, {Map<String, String>? headers}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
       print('Making POST request to: $url');
@@ -41,13 +42,14 @@ class ApiProvider {
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          if (headers != null) ...headers, // Add optional headers
         },
         body: jsonEncode(data),
       ).timeout(const Duration(seconds: timeoutDuration));
-      
+
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       return _handleResponse(response);
     } on SocketException catch (e) {
       throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
@@ -60,7 +62,8 @@ class ApiProvider {
     }
   }
 
-  Future<http.Response> putRequest(String endpoint, Map<String, dynamic> data) async {
+  /// PUT request
+  Future<http.Response> putRequest(String endpoint, Map<String, dynamic> data, {Map<String, String>? headers}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
       final response = await http.put(
@@ -68,6 +71,7 @@ class ApiProvider {
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          if (headers != null) ...headers, // Add optional headers
         },
         body: jsonEncode(data),
       ).timeout(const Duration(seconds: timeoutDuration));
@@ -81,10 +85,11 @@ class ApiProvider {
     }
   }
 
-  Future<http.Response> deleteRequest(String endpoint) async {
+  /// DELETE request
+  Future<http.Response> deleteRequest(String endpoint, {Map<String, String>? headers}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
-      final response = await http.delete(url)
+      final response = await http.delete(url, headers: headers)
           .timeout(const Duration(seconds: timeoutDuration));
       return _handleResponse(response);
     } on SocketException catch (e) {

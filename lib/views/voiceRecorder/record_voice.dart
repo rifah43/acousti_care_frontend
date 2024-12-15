@@ -13,7 +13,7 @@ class RecordVoice extends StatefulWidget {
 }
 
 class _RecordVoiceState extends State<RecordVoice> {
-  final AudioRecorder _audioRecorder = AudioRecorder();
+  final Record _audioRecorder = Record();  // Changed from AudioRecorder to Record
   bool isRecording = false;
   String? recPath;
   final ApiProvider apiProvider = ApiProvider();
@@ -29,15 +29,14 @@ class _RecordVoiceState extends State<RecordVoice> {
       final String path = p.join(appDirectory.path, "recording_$timestamp.wav");
 
       await _audioRecorder.start(
-          const RecordConfig(
-              sampleRate: 44100,
-              bitRate: 16,
-              numChannels: 1,
-              encoder: AudioEncoder.wav),
-          path: path);
+          encoder: AudioEncoder.wav,  // Updated RecordConfig syntax
+          path: path,
+          samplingRate: 44100,        // Updated parameter name
+          bitRate: 16,
+          numChannels: 1);
       setState(() {
         isRecording = true;
-        recPath = path; // Save the path here directly
+        recPath = path;
       });
     }
   }
@@ -47,9 +46,9 @@ class _RecordVoiceState extends State<RecordVoice> {
       String? filePath = await _audioRecorder.stop();
       setState(() {
         isRecording = false;
-        recPath = filePath; // Keep the recorded file path
+        recPath = filePath;
       });
-        }
+    }
   }
 
   Future<void> _uploadAudio() async {
@@ -64,29 +63,31 @@ class _RecordVoiceState extends State<RecordVoice> {
     try {
       final response =
           await apiProvider.uploadAudioFile('extract-features', audioFile);
-      // Optionally, you can show a success message
 
       if (response.statusCode == 400) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text("Audio file is empty!"),
-              duration: Duration(seconds: 3),
-              backgroundColor: Colors.orange,),
+            content: Text("Audio file is empty!"),
+            duration: Duration(seconds: 3),
+            backgroundColor: Colors.orange,
+          ),
         );
       } else if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text("Audio file uploaded!"),
-              duration: Duration(seconds: 1),
-              backgroundColor: Colors.green,),
+            content: Text("Audio file uploaded!"),
+            duration: Duration(seconds: 1),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Failed to upload audio"),
-            duration: Duration(seconds: 3),
-            backgroundColor: Colors.red,),
+          content: Text("Failed to upload audio"),
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }

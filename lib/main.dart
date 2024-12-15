@@ -7,6 +7,7 @@ import 'package:acousti_care_frontend/providers/health_data_provider.dart';
 import 'package:acousti_care_frontend/providers/notification_provider.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();  // Add this line
   await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
@@ -36,4 +37,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

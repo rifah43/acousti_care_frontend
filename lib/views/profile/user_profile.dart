@@ -7,6 +7,12 @@ import 'package:acousti_care_frontend/views/custom_topbar.dart';
 class UserProfile extends StatelessWidget {
   const UserProfile({super.key});
 
+  get name => null;
+
+  get email => null;
+
+  get id => null;
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);

@@ -28,6 +28,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   String _gender = 'Select Gender';
 
   String? _validateName(String? value) {
@@ -43,12 +44,12 @@ class _ProfileSetupState extends State<ProfileSetup> {
     return null;
   }
 
-  String? _validateEmail(String? value) {
+  String? _validatemail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return 'mail is required';
     }
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email address';
+      return 'Please enter a valid mail address';
     }
     return null;
   }
@@ -109,7 +110,7 @@ class _ProfileSetupState extends State<ProfileSetup> {
     } else if (_currentPage == 0) {
       final nameValidation = _validateName(_nameController.text.trim());
       final ageValidation = _validateAge(_ageController.text.trim());
-      final emailValidation = _validateEmail(_mailController.text.trim());
+      final mailValidation = _validatemail(_mailController.text.trim());
 
       if (nameValidation != null) {
         _showSnackBar(nameValidation);
@@ -119,8 +120,8 @@ class _ProfileSetupState extends State<ProfileSetup> {
         _showSnackBar(ageValidation);
         return;
       }
-      if (emailValidation != null) {
-        _showSnackBar(emailValidation);
+      if (mailValidation != null) {
+        _showSnackBar(mailValidation);
         return;
       }
       _goToNextPage();
@@ -175,7 +176,7 @@ void _saveProfile() async {
     // Perform final validation of all fields
     final nameValidation = _validateName(_nameController.text.trim());
     final ageValidation = _validateAge(_ageController.text.trim());
-    final emailValidation = _validateEmail(_mailController.text.trim());
+    final mailValidation = _validatemail(_mailController.text.trim());
     final weightValidation = _validateWeight(_weightController.text.trim());
     final heightValidation = _validateHeight(_heightController.text.trim());
     final genderValidation = _validateGender(_gender);
@@ -183,7 +184,7 @@ void _saveProfile() async {
     // Check if any validation fails
     if (nameValidation != null || 
         ageValidation != null || 
-        emailValidation != null ||
+        mailValidation != null ||
         weightValidation != null || 
         heightValidation != null || 
         genderValidation != null) {
@@ -199,6 +200,7 @@ void _saveProfile() async {
       gender: _gender,
       mail: _mailController.text.trim(),
       bmi: _calculateBMI(),
+      password: _passwordController.text.trim(),
     );
     
     final result = await summaryPage.createUser(context);
@@ -233,7 +235,7 @@ void _saveProfile() async {
       'height': height,
       'gender': _gender,
       'bmi': bmi,
-      'email': _mailController.text.trim(),
+      'mail': _mailController.text.trim(),
     };
   }
 
@@ -263,6 +265,7 @@ void _saveProfile() async {
                           nameController: _nameController,
                           ageController: _ageController,
                           mailController: _mailController,
+                          passwordController: _passwordController,
                         ),
                         HeightWeightGenderPage(
                           heightController: _heightController,
@@ -279,6 +282,7 @@ void _saveProfile() async {
                           height: double.tryParse(_heightController.text.trim()) ?? 0.0,
                           gender: _gender,
                           mail: _mailController.text.trim(),
+                          password: _passwordController.text.trim(),
                           bmi: _calculateBMI(),
                         ),
                       ],

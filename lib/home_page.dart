@@ -25,115 +25,126 @@ class HomePageState extends State<HomePage> {
     final userProvider = Provider.of<UserProvider>(context);
     final userName = userProvider.currentUser?.name ?? 'User';
 
-    return Scaffold(
-      appBar: CustomTopBar(
-        title: "Welcome, $userName",
-        hasDrawer: true,
-        hasSettings: true,
-        withBack: false,
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: const BoxDecoration(
-                color: AppColors.backgroundPrimary,
-              ),
-              child: Text(
-                userName,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text("Notifications"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NotificationsPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.support),
-              title: const Text("Help & Support"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HelpSupportPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.feedback),
-              title: const Text("Feedback"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FeedbackPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.policy),
-              title: const Text("Terms & Privacy"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TermsPrivacyPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.switch_account),
-              title: const Text("Switch Profile"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SwitchProfile()),
-                );
-              },
-            ),
-          ],
+    return SafeArea(
+      child: Scaffold(
+        appBar: CustomTopBar(
+          title: "Welcome, $userName",
+          hasDrawer: true,
+          hasSettings: true,
+          withBack: false,
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                Text(
-                  'Welcome to AcoustiCare!',
-                  style: titleStyle(context, AppColors.textPrimary),
-                  textAlign: TextAlign.center,
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  color: AppColors.backgroundPrimary,
                 ),
-                const SizedBox(height: 20),
-                const Dashboard(),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RecordVoice()),
-                    );
-                  },
-                  style: primaryButtonStyle(),
-                  child: const Text('Record Voice'),
+                child: Text(
+                  userName,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 24,
+                  ),
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.notifications),
+                title: const Text("Notifications"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.support),
+                title: const Text("Help & Support"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HelpSupportPage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.feedback),
+                title: const Text("Feedback"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FeedbackPage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.policy),
+                title: const Text("Terms & Privacy"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const TermsPrivacyPage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.switch_account),
+                title: const Text("Switch Profile"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SwitchProfile()),
+                  );
+                },
+              ),
+            ],
           ),
         ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 20),
+                        Text(
+                          'Welcome to AcoustiCare!',
+                          style: titleStyle(context, AppColors.textPrimary),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        const Dashboard(),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const RecordVoice()),
+                            );
+                          },
+                          style: primaryButtonStyle(),
+                          child: const Text('Record Voice'),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        bottomNavigationBar: const BottomNavbar(),
       ),
-      bottomNavigationBar: const BottomNavbar(),
     );
   }
 }
