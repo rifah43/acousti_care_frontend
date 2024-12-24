@@ -14,7 +14,7 @@ class SwitchProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text("jiji");
+    return const Text("jiji");
     // return ListView.builder(
     //   itemCount: profiles.length,
     //   itemBuilder: (context, index) {
