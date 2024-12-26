@@ -57,10 +57,7 @@ class SummaryPage extends StatelessWidget {
       final responseBody = jsonDecode(response.body);
       
       if (response.statusCode == 201) {
-        print(responseBody);
         final userId = responseBody[0]['user_id'];
-        print("jijiji");
-        print(userId.runtimeType);
         if (userId != null) {
           await saveCache(userId.toString());
           _showSnackBar(context, 'Profile created successfully!', AppColors.success);
