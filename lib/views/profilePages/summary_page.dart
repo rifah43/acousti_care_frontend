@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'package:acousti_care_frontend/services/auth_service.dart';
 import 'package:acousti_care_frontend/services/http_provider.dart';
-import 'package:acousti_care_frontend/utils/device_helper.dart';
 import 'package:cache_manager/cache_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
@@ -32,51 +32,54 @@ class SummaryPage extends StatelessWidget {
     await WriteCache.setString(key: "activeProfileId", value: activeProfileId);
   }
 
-  Future<Map<String, dynamic>> createUser(BuildContext context) async {
-    final Map<String, dynamic> profileData = {
-      'name': name,
-      'age': int.parse(age),
-      'weight': weight,
-      'height': height,
-      'gender': gender,
-      'bmi': bmi ?? 0.0,
-      'isActive': true,
-      'email': mail,
-      'password': password,
-    };
-    try {
-      final String? deviceID = await DeviceHelper.getDeviceId();
-      
-      if (deviceID == null) {
-        _showSnackBar(context, 'Device ID not available', AppColors.error);
-        return {'success': false, 'message': 'Device ID not available'};
-      }
-      
-      final response = await ApiProvider().postRequest('add-profile', profileData, headers: 
-      {"X-Device-ID": deviceID});
-      final responseBody = jsonDecode(response.body);
-      
-      if (response.statusCode == 201) {
-        final userId = responseBody[0]['user_id'];
-        if (userId != null) {
-          await saveCache(userId.toString());
-          _showSnackBar(context, 'Profile created successfully!', AppColors.success);
-          return {'success': true, 'message': 'Profile created successfully'};
-        } else {
-          _showSnackBar(context, 'Invalid response format from server', AppColors.error);
-          return {'success': false, 'message': responseBody["message"]};
-        }
-      } else {
-        final errorMessage = responseBody['message'] ?? 'Error creating profile';
-        _showSnackBar(context, errorMessage, AppColors.error);
-        return {'success': false, 'message': errorMessage};
-      }
-    } catch (e) {
-      _showSnackBar(context, 'Error: $e', AppColors.error);
-      return {'success': false, 'message': e.toString()};
-    }
-  }
+Future<Map<String, dynamic>> createUser(BuildContext context) async {
+  final Map<String, dynamic> profileData = {
+    'name': name,
+    'age': int.parse(age),
+    'weight': weight,
+    'height': height,
+    'gender': gender,
+    'bmi': bmi ?? 0.0,
+    'isActive': true,
+    'email': mail,
+    'password': password,
+  };
 
+  try {
+    // Ensure device is initialized
+    await AuthService.initializeDevice();
+    
+    final response = await ApiProvider().postRequest('add-profile', profileData);
+    final responseBody = jsonDecode(response.body);
+    
+    if (response.statusCode == 201) {
+      final userId = responseBody['user']['user_id'];
+      final token = responseBody['token'];
+      
+      if (userId != null && token != null) {
+        // Save both cache and auth data
+        await saveCache(userId.toString());
+        await AuthService.saveAuthData(
+          token: token,
+          userId: userId.toString(),
+        );
+        
+        _showSnackBar(context, 'Profile created successfully!', AppColors.success);
+        return {'success': true, 'message': 'Profile created successfully'};
+      } else {
+        _showSnackBar(context, 'Invalid response format from server', AppColors.error);
+        return {'success': false, 'message': responseBody["message"]};
+      }
+    } else {
+      final errorMessage = responseBody['message'] ?? 'Error creating profile';
+      _showSnackBar(context, errorMessage, AppColors.error);
+      return {'success': false, 'message': errorMessage};
+    }
+  } catch (e) {
+    _showSnackBar(context, 'Error: $e', AppColors.error);
+    return {'success': false, 'message': e.toString()};
+  }
+}
   void _showSnackBar(BuildContext context, String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

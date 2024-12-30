@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'auth_service.dart';
 
 class ApiProvider {
-  static const int timeoutDuration = 10; 
+  static const int timeoutDuration = 10;
   
   String get _baseUrl {
     final url = dotenv.env['API_BASE_URL'];
@@ -15,9 +16,36 @@ class ApiProvider {
     return url;
   }
 
-  Future<http.Response> getRequest(String endpoint, {Map<String, String>? headers}) async {
+  /// Get authentication headers
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    };
+
+    // Add device ID
+    final deviceId = await AuthService.getDeviceId();
+    if (deviceId != null) {
+      headers['X-Device-ID'] = deviceId;
+    }
+
+    // Add auth token if available
+    final token = await AuthService.getToken();
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    return headers;
+  }
+
+  Future<http.Response> getRequest(String endpoint, {Map<String, String>? additionalHeaders}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
+      final headers = await _getAuthHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+
       final response = await http.get(url, headers: headers)
           .timeout(const Duration(seconds: timeoutDuration));
       return _handleResponse(response);
@@ -30,20 +58,20 @@ class ApiProvider {
     }
   }
 
-  /// POST request
-  Future<http.Response> postRequest(String endpoint, Map<String, dynamic> data, {Map<String, String>? headers}) async {
+  Future<http.Response> postRequest(String endpoint, Map<String, dynamic> data, {Map<String, String>? additionalHeaders}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
       print('Making POST request to: $url');
       print('Request body: ${jsonEncode(data)}');
       
+      final headers = await _getAuthHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+
       final response = await http.post(
         url,
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          if (headers != null) ...headers, // Add optional headers
-        },
+        headers: headers,
         body: jsonEncode(data),
       ).timeout(const Duration(seconds: timeoutDuration));
 
@@ -62,17 +90,17 @@ class ApiProvider {
     }
   }
 
-  /// PUT request
-  Future<http.Response> putRequest(String endpoint, Map<String, dynamic> data, {Map<String, String>? headers}) async {
+  Future<http.Response> putRequest(String endpoint, Map<String, dynamic> data, {Map<String, String>? additionalHeaders}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
+      final headers = await _getAuthHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+
       final response = await http.put(
         url,
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          if (headers != null) ...headers, // Add optional headers
-        },
+        headers: headers,
         body: jsonEncode(data),
       ).timeout(const Duration(seconds: timeoutDuration));
       return _handleResponse(response);
@@ -85,10 +113,14 @@ class ApiProvider {
     }
   }
 
-  /// DELETE request
-  Future<http.Response> deleteRequest(String endpoint, {Map<String, String>? headers}) async {
+  Future<http.Response> deleteRequest(String endpoint, {Map<String, String>? additionalHeaders}) async {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
+      final headers = await _getAuthHeaders();
+      if (additionalHeaders != null) {
+        headers.addAll(additionalHeaders);
+      }
+
       final response = await http.delete(url, headers: headers)
           .timeout(const Duration(seconds: timeoutDuration));
       return _handleResponse(response);
@@ -105,6 +137,11 @@ class ApiProvider {
     final url = Uri.parse('$_baseUrl/$endpoint');
     try {
       var request = http.MultipartRequest('POST', url);
+      
+      // Add auth headers to multipart request
+      final headers = await _getAuthHeaders();
+      request.headers.addAll(headers);
+      
       request.files.add(await http.MultipartFile.fromPath(
         'audioFile', 
         audioFile.path,
@@ -135,6 +172,8 @@ class ApiProvider {
       case 400:
         throw Exception('Bad request: ${_parseErrorMessage(response.body)}');
       case 401:
+        // Handle token expiration
+        AuthService.removeToken(); // Clear invalid token
         throw Exception('Unauthorized: Please log in again');
       case 403:
         throw Exception('Forbidden: You don\'t have permission to access this resource');
