@@ -102,46 +102,36 @@ class HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 20),
-                        Text(
-                          'Welcome to AcoustiCare!',
-                          style: titleStyle(context, AppColors.textPrimary),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-                        const Dashboard(),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const RecordVoice()),
-                            );
-                          },
-                          style: primaryButtonStyle(),
-                          child: const Text('Record Voice'),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
+        body: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            Text(
+              'Welcome to AcoustiCare!',
+              style: titleStyle(context, AppColors.textPrimary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const RecordVoice()),
+                );
+              },
+              style: primaryButtonStyle(),
+              child: const Text('Record Voice & Predict'),
+            ),
+            const SizedBox(height: 20),
+            // Expanded(
+            //   child: Dashboard(), 
+            // ),
+          ],
+        ),
+          ],
         ),
         bottomNavigationBar: const BottomNavbar(),
       ),

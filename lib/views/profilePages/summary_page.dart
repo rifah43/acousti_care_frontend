@@ -57,7 +57,6 @@ Future<Map<String, dynamic>> createUser(BuildContext context) async {
       final token = responseBody['token'];
       
       if (userId != null && token != null) {
-        // Save both cache and auth data
         await saveCache(userId.toString());
         await AuthService.saveAuthData(
           token: token,
