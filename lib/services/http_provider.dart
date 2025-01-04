@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:acousti_care_frontend/providers/user_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
@@ -133,33 +134,103 @@ class ApiProvider {
     }
   }
 
-  Future<http.Response> uploadAudioFile(String endpoint, File audioFile) async {
-    final url = Uri.parse('$_baseUrl/$endpoint');
-    try {
-      var request = http.MultipartRequest('POST', url);
-      
-      // Add auth headers to multipart request
-      final headers = await _getAuthHeaders();
-      request.headers.addAll(headers);
-      
-      request.files.add(await http.MultipartFile.fromPath(
-        'audioFile', 
-        audioFile.path,
-      ));
-
-      var streamedResponse = await request.send()
-          .timeout(const Duration(seconds: timeoutDuration * 2)); // Longer timeout for file upload
-      var response = await http.Response.fromStream(streamedResponse);
-      return _handleResponse(response);
-    } on SocketException catch (e) {
-      throw Exception('Network error: Please check your internet connection and server status. (${e.message})');
-    } on TimeoutException {
-      throw Exception('Request timed out: Server is not responding');
-    } catch (e) {
-      throw Exception('Failed to upload audio file: $e');
+  Future<http.Response> uploadAudioFile(
+  String endpoint,
+  File audioFile,
+  UserProvider user,
+) async {
+  final url = Uri.parse('$_baseUrl/$endpoint');
+  try {
+    // Validate user data
+    final currentUser = user.currentUser;
+    if (currentUser == null) {
+      throw Exception('User not found');
     }
-  }
 
+    // Create multipart request
+    var request = http.MultipartRequest('POST', url);
+    
+    // Add auth headers
+    final headers = await _getAuthHeaders();
+    request.headers.addAll(headers);
+    
+    // Add demographic data
+    request.fields.addAll({
+      'user_id': currentUser.id ?? '',
+      'gender': currentUser.gender,
+      'age': currentUser.age.toString(),
+      'bmi': currentUser.bmi.toString(),
+    });
+    
+    // Validate data before adding file
+    if (request.fields.values.any((value) => value.isEmpty)) {
+      throw Exception('Missing required user data. Please complete your profile.');
+    }
+
+    final age = double.tryParse(request.fields['age']!);
+    final bmi = double.tryParse(request.fields['bmi']!);
+    
+    if (age == null || age <= 0 || age > 120) {
+      throw Exception('Invalid age value (must be between 1 and 120)');
+    }
+    if (bmi == null || bmi <= 0 || bmi > 100) {
+      throw Exception('Invalid BMI value (must be between 1 and 100)');
+    }
+
+    // Add audio file
+    if (!await audioFile.exists()) {
+      throw Exception('Audio file not found');
+    }
+    
+    if (audioFile.lengthSync() == 0) {
+      throw Exception('Audio file is empty');
+    }
+
+    request.files.add(await http.MultipartFile.fromPath(
+      'audio',
+      audioFile.path,
+    ));
+
+    // Send request
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: timeoutDuration * 2),
+    );
+    
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    // Handle response
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      try {
+        final data = jsonDecode(response.body);
+        print('Prediction result: ${data['risk_probability']}');
+        return response;
+      } catch (e) {
+        throw Exception('Invalid response format from server');
+      }
+    } else {
+      final error = _parseErrorResponse(response);
+      throw Exception(error);
+    }
+    
+  } on SocketException catch (e) {
+    throw Exception('Network error: Please check your internet connection. (${e.message})');
+  } on TimeoutException {
+    throw Exception('Request timed out: Server is not responding');
+  } on FormatException catch (e) {
+    throw Exception('Invalid data format: ${e.message}');
+  } catch (e) {
+    throw Exception(e.toString());
+  }
+}
+
+String _parseErrorResponse(http.Response response) {
+  try {
+    final body = jsonDecode(response.body);
+    return body['error'] ?? body['message'] ?? 'Unknown error occurred';
+  } catch (e) {
+    return 'Server error (${response.statusCode})';
+  }
+}
   http.Response _handleResponse(http.Response response) {
     print('Response status code: ${response.statusCode}');
     print('Response body: ${response.body}');

@@ -6,7 +6,6 @@ import 'package:acousti_care_frontend/views/drawerPages/notification_page.dart';
 import 'package:acousti_care_frontend/views/drawerPages/switchProfile.dart';
 import 'package:acousti_care_frontend/views/drawerPages/terms_and_privacy.dart';
 import 'package:acousti_care_frontend/views/styles.dart';
-import 'package:acousti_care_frontend/views/dashboard/dashboard.dart';
 import 'package:acousti_care_frontend/views/voiceRecorder/record_voice.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,9 +17,14 @@ class HomePage extends StatefulWidget {
   @override
   State<HomePage> createState() => HomePageState();
 }
-
 class HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserProvider>(context, listen: false).initialize();
+    });
+  }
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final userName = userProvider.currentUser?.name ?? 'User';
