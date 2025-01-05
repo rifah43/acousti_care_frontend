@@ -25,6 +25,7 @@ class HomePageState extends State<HomePage> {
       Provider.of<UserProvider>(context, listen: false).initialize();
     });
   }
+  @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final userName = userProvider.currentUser?.name ?? 'User';

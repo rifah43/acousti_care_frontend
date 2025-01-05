@@ -7,7 +7,7 @@ class User {
   final double weight;
   final double bmi;
   final String email;
-  final String? password;  // Optional for responses
+  final String? password;
   final bool isActive;
 
   User({
@@ -24,8 +24,9 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    print('Parsing JSON: $json'); // Debug print
     return User(
-      id: json['_id']?.toString(),
+      id: (json['_id'] ?? json['id'])?.toString(), // Handle both _id and id
       name: json['name'] ?? '',
       age: _parseInt(json['age']),
       gender: json['gender'] ?? '',
@@ -35,13 +36,15 @@ class User {
       email: json['email'] ?? '',
       isActive: json['isActive'] ?? false,
     );
-  }
+}
 
   static int _parseInt(dynamic value) {
     if (value == null) return 0;
     try {
+      if (value is int) return value;
       return int.parse(value.toString());
     } catch (e) {
+      print('Error parsing int: $value'); // Debug print
       return 0;
     }
   }
@@ -49,14 +52,18 @@ class User {
   static double _parseDouble(dynamic value) {
     if (value == null) return 0.0;
     try {
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
       return double.parse(value.toString());
     } catch (e) {
+      print('Error parsing double: $value'); // Debug print
       return 0.0;
     }
   }
 
   Map<String, dynamic> toJson() {
-    final map = {
+    return {
+      'id': id,
       'name': name,
       'age': age,
       'gender': gender,
@@ -66,31 +73,8 @@ class User {
       'email': email,
       'isActive': isActive,
     };
-
-    if (id != null) map['_id'] = id as String;
-    if (password != null) map['password'] = password as String;
-
-    return map;
   }
 
-  // Create registration data (includes password)
-  Map<String, dynamic> toRegistrationJson() {
-    if (password == null) {
-      throw Exception('Password is required for registration');
-    }
-    return {
-      'name': name,
-      'age': age,
-      'gender': gender,
-      'height': height,
-      'weight': weight,
-      'bmi': bmi,
-      'email': email,
-      'password': password,
-    };
-  }
-
-  // Create a copy of the user with some fields modified
   User copyWith({
     String? id,
     String? name,
@@ -115,5 +99,10 @@ class User {
       password: password ?? this.password,
       isActive: isActive ?? this.isActive,
     );
+  }
+  
+  @override
+  String toString() {
+    return 'User(id: $id, name: $name, email: $email, isActive: $isActive)';
   }
 }
