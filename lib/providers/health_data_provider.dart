@@ -1,228 +1,208 @@
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as parser;
 import 'dart:convert';
+import 'dart:io';
+import 'package:acousti_care_frontend/models/trend_data.dart';
+import 'package:acousti_care_frontend/services/http_provider.dart';
+import 'package:flutter/material.dart';
 
-class HealthRecommendationsService {
-  static const MEDLINE_API = 'https://health.gov/myhealthfinder/api/v3/';
-  static const NIH_API = 'https://health.data.nih.gov/api/3/action/';
+class HealthDataProvider with ChangeNotifier {
+  final ApiProvider _apiProvider = ApiProvider();
+  List<TrendData> _trendData = [];
+  Map<String, dynamic>? _trendStatistics;
+  Map<String, List<String>>? _healthRecommendations;
+  bool _isLoading = false;
 
-  Future<List<String>> fetchHealthRecommendations(String riskLevel) async {
-    List<String> recommendations = [];
+  List<TrendData> get trendData => _trendData;
+  Map<String, dynamic>? get trendStatistics => _trendStatistics;
+  Map<String, List<String>>? get healthRecommendations => _healthRecommendations;
+  bool get isLoading => _isLoading;
 
+  Future<void> fetchTrendData(String userId, {String timeframe = '30days'}) async {
     try {
-      await Future.wait([
-        _fetchFromMedlinePlus(recommendations),
-        _fetchFromNIH(recommendations),
-        _fetchFromWHO(recommendations)
-      ]);
+      _isLoading = true;
+      notifyListeners();
 
-      if (recommendations.isEmpty) {
-        recommendations = _getLocalRecommendations(riskLevel);
+      final response = await _apiProvider.getRequest(
+        'trends/$userId?days=${_getDaysFromTimeframe(timeframe)}',
+      );
+
+      if (response.statusCode == 404) {
+        throw Exception('No trend data found.');
       }
 
-      return _processRecommendations(recommendations);
+      final data = jsonDecode(response.body);
+      _trendData = (data['trend_data'] as List)
+          .map((item) => TrendData.fromJson(item))
+          .toList();
+      _trendStatistics = data['statistics'];
+      
+      // After getting trend data, fetch health recommendations
+      await _fetchHealthRecommendations(_trendData.last.riskLevel);
     } catch (e) {
-      return _getLocalRecommendations(riskLevel);
+      debugPrint('Error fetching trend data: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  Future<void> _fetchFromMedlinePlus(List<String> recommendations) async {
+  Future<void> _fetchHealthRecommendations(double riskLevel) async {
     try {
-      final response = await http.get(
-        Uri.parse('${MEDLINE_API}topicsearch.json?keyword=diabetes+management')
+      final response = await _apiProvider.getRequest(
+        'recommendations?risk_level=$riskLevel',
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final resources = data['Result']['Resources']['Resource'];
-        
-        for (var resource in resources) {
-          if (resource['Type'] == 'Health Topic' &&
-              resource['Title'].toString().toLowerCase().contains('diabetes')) {
-            recommendations.add(resource['Title']);
-          }
-        }
+        _healthRecommendations = {
+          'diet': List<String>.from(data['diet_suggestions'] ?? []),
+          'lifestyle': List<String>.from(data['lifestyle_recommendations'] ?? []),
+          'exercise': List<String>.from(data['exercise_recommendations'] ?? [])
+        };
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error fetching health recommendations: $e');
+      // Fallback recommendations if API fails
+      _setFallbackRecommendations(riskLevel);
+    }
   }
 
-  Future<void> _fetchFromNIH(List<String> recommendations) async {
+  void _setFallbackRecommendations(double riskLevel) {
+    final isHighRisk = riskLevel > 0.7;
+    final isMediumRisk = riskLevel > 0.4 && riskLevel <= 0.7;
+
+    _healthRecommendations = {
+      'diet': _getDietRecommendations(isHighRisk, isMediumRisk),
+      'lifestyle': _getLifestyleRecommendations(isHighRisk, isMediumRisk),
+      'exercise': _getExerciseRecommendations(isHighRisk, isMediumRisk)
+    };
+  }
+
+  List<String> _getDietRecommendations(bool isHighRisk, bool isMediumRisk) {
+    if (isHighRisk) {
+      return [
+        'Limit carbohydrate intake to 45-60g per meal',
+        'Include more fiber-rich foods in your diet',
+        'Choose foods with low glycemic index',
+        'Avoid sugary drinks and processed foods',
+        'Include lean proteins in every meal',
+        'Eat plenty of non-starchy vegetables'
+      ];
+    } else if (isMediumRisk) {
+      return [
+        'Monitor portion sizes of carbohydrate-rich foods',
+        'Include more whole grains in your diet',
+        'Eat a variety of colorful vegetables daily',
+        'Choose healthy fats like nuts and avocados',
+        'Limit processed food intake'
+      ];
+    } else {
+      return [
+        'Maintain a balanced diet with plenty of vegetables',
+        'Choose whole grains over refined grains',
+        'Include healthy proteins in your meals',
+        'Stay hydrated throughout the day'
+      ];
+    }
+  }
+
+  List<String> _getLifestyleRecommendations(bool isHighRisk, bool isMediumRisk) {
+    if (isHighRisk) {
+      return [
+        'Monitor blood sugar levels regularly',
+        'Get adequate sleep (7-9 hours per night)',
+        'Manage stress through relaxation techniques',
+        'Consider joining a diabetes prevention program',
+        'Regular medical check-ups are important'
+      ];
+    } else if (isMediumRisk) {
+      return [
+        'Maintain regular sleep schedule',
+        'Practice stress management',
+        'Consider regular health screenings',
+        'Stay active throughout the day'
+      ];
+    } else {
+      return [
+        'Maintain healthy sleep habits',
+        'Stay active and engaged in daily activities',
+        'Practice regular stress management'
+      ];
+    }
+  }
+
+  List<String> _getExerciseRecommendations(bool isHighRisk, bool isMediumRisk) {
+    if (isHighRisk) {
+      return [
+        'Aim for 150 minutes of moderate exercise weekly',
+        'Include both cardio and strength training',
+        'Start slowly and gradually increase intensity',
+        'Consider working with a fitness professional',
+        'Monitor blood sugar before and after exercise'
+      ];
+    } else if (isMediumRisk) {
+      return [
+        'Get at least 30 minutes of exercise daily',
+        'Mix up different types of physical activities',
+        'Try walking after meals',
+        'Include strength training twice a week'
+      ];
+    } else {
+      return [
+        'Stay physically active daily',
+        'Find enjoyable ways to move more',
+        'Include variety in your exercise routine'
+      ];
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchMonthlyAnalysis(String userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('${NIH_API}datastore_search?resource_id=diabetes-prevention')
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final results = data['result']['records'];
-
-        for (var record in results) {
-          if (record['recommendation'] != null) {
-            recommendations.add(record['recommendation']);
-          }
-        }
+      final response = await _apiProvider.getRequest('trends/monthly-analysis/$userId');
+      if (response.statusCode == 404) {
+        throw const NoDataException('No health data available for analysis');
       }
-    } catch (_) {}
-  }
-
-  Future<void> _fetchFromWHO(List<String> recommendations) async {
-    try {
-      final response = await http.get(Uri.parse('https://www.who.int/diabetes/en/'));
-
-      if (response.statusCode == 200) {
-        final document = parser.parse(response.body);
-        final elements = document.querySelectorAll('.diabetes-recommendations li');
-
-        for (var element in elements) {
-          recommendations.add(element.text.trim());
-        }
+      if (response.statusCode != 200) {
+        throw HttpException('Failed to fetch health data');
       }
-    } catch (_) {}
+      final data = jsonDecode(response.body);
+      if (data == null || data['monthly_analysis'] == null) {
+        throw const NoDataException('No analysis data available');
+      }
+      return data['monthly_analysis'];
+    } catch (e) {
+      debugPrint('Error fetching monthly analysis: $e');
+      if (e is NoDataException) {
+        rethrow;
+      }
+      throw Exception('Failed to load health recommendations');
+    }
   }
 
-  List<String> _processRecommendations(List<String> recommendations) {
-    final keywords = ['diabetes', 'blood sugar', 'diet', 'exercise', 'lifestyle'];
-    return recommendations
-        .toSet()
-        .where((rec) => keywords.any((k) => rec.toLowerCase().contains(k)))
-        .map((rec) {
-          rec = rec.trim();
-          return rec.endsWith('.') ? rec : '$rec.';
-        })
-        .take(10)
-        .toList();
-  }
-
-  List<String> _getLocalRecommendations(String riskLevel) {
-    const highRisk = [
-      'Monitor blood sugar levels frequently.',
-      'Follow a strict low-glycemic diet.',
-      'Engage in regular physical activity.',
-      'Take prescribed medications as directed.'
-    ];
-
-    const moderateRisk = [
-      'Schedule regular check-ups with your doctor.',
-      'Maintain a balanced diet.',
-      'Exercise for at least 30 minutes daily.',
-      'Monitor your weight regularly.'
-    ];
-
-    const lowRisk = [
-      'Eat a healthy, balanced diet.',
-      'Stay active with regular exercise.',
-      'Monitor your health metrics regularly.'
-    ];
-
-    switch (riskLevel.toLowerCase()) {
-      case 'high':
-        return highRisk;
-      case 'moderate':
-        return moderateRisk;
+  int _getDaysFromTimeframe(String timeframe) {
+    switch (timeframe) {
+      case '7days':
+        return 7;
+      case '90days':
+        return 90;
       default:
-        return lowRisk;
+        return 30;
     }
+  }
+
+  void reset() {
+    _trendData = [];
+    _trendStatistics = null;
+    _healthRecommendations = null;
+    _isLoading = false;
+    notifyListeners();
   }
 }
 
-
-class HealthDataProvider with ChangeNotifier {
-  final HealthRecommendationsService _recommendationService = HealthRecommendationsService();
+class NoDataException implements Exception {
+  final String message;
+  const NoDataException(this.message);
   
-  List<String> _recommendations = [];
-  List<Map<String, dynamic>> _trendData = [];
-  Map<String, dynamic> _riskPredictions = {};
-  String _riskLevel = 'default';
-  bool _isLoading = false;
-
-  List<String> get recommendations => _recommendations;
-  List<Map<String, dynamic>> get trendData => _trendData;
-  Map<String, dynamic> get riskPredictions => _riskPredictions;
-  String get riskLevel => _riskLevel;
-  bool get isLoading => _isLoading;
-
-  get riskTrend => null;
-
-  get riskPercentage => null;
-
-  void updateRiskLevel(String newLevel) {
-    _riskLevel = newLevel;
-    notifyListeners();
-  }
-  Future<void> fetchTrendData(String? userId) async {
-    if (userId == null) return;
-
-    try {
-      _trendData = await _getMockTrendData();
-      notifyListeners();
-    } catch (e) {
-      _trendData = _getDefaultTrendData();
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchRecommendations() async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      _recommendations = await _recommendationService.fetchHealthRecommendations(_riskLevel);
-    } catch (_) {
-      _recommendations = _recommendationService._getLocalRecommendations(_riskLevel);
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> fetchRiskPredictions() async {
-    try {
-      _isLoading = true;
-      notifyListeners();
-
-      _riskPredictions = await _getMockRiskPrediction();
-      _riskLevel = _riskPredictions['risk_level'] ?? 'default';
-    } catch (_) {
-      _riskPredictions = _getDefaultRiskPredictions();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-   Future<List<Map<String, dynamic>>> _getMockTrendData() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return List.generate(7, (index) {
-      return {
-        'date': DateTime.now().subtract(Duration(days: 6 - index)).toIso8601String(),
-        'risk_level': index < 3 ? 'low' : (index < 5 ? 'moderate' : 'high'),
-        'value': 0.3 + (index * 0.1)
-      };
-    });
-  }
-
-  Future<Map<String, dynamic>> _getMockRiskPrediction() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return {
-      'risk_level': 'moderate',
-      'confidence': 0.85,
-      'last_updated': DateTime.now().toIso8601String(),
-      'details': {'factors': ['BMI', 'age']}
-    };
-  }
-
-  List<Map<String, dynamic>> _getDefaultTrendData() {
-    return [
-      {'date': DateTime.now().toIso8601String(), 'risk_level': 'moderate', 'value': 0.5}
-    ];
-  }
-
-  Map<String, dynamic> _getDefaultRiskPredictions() {
-    return {
-      'risk_level': 'moderate',
-      'confidence': 0.75,
-      'last_updated': DateTime.now().toIso8601String()
-    };
-  }
+  @override
+  String toString() => message;
 }

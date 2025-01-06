@@ -26,6 +26,9 @@ dependencies:
   fl_chart: ^0.69.2
   html: ^0.15.0
   path_provider_android: ^2.2.10
+  url_launcher: ^6.0.13
+  timeago: ^3.0.2
+  webfeed: ^0.7.0
 
 dev_dependencies:
   flutter_test:

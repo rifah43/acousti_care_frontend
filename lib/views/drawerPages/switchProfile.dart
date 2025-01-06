@@ -109,7 +109,7 @@ class _SwitchProfileState extends State<SwitchProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomTopBar(title: 'Switch Profile', hasDrawer: false, withBack: true, hasSettings: false),
+      appBar: const CustomTopBar(title: 'Switch Profile', hasDrawer: false, withBack: true, hasSettings: false),
       body: _buildBody(context),
     );
   }
@@ -168,8 +168,8 @@ class _SwitchProfileState extends State<SwitchProfile> {
               style: subtitleStyle(context, AppColors.textPrimary),
             ),
             trailing: profile.isActive
-                ? Icon(Icons.check_circle, color: AppColors.success)
-                : Icon(Icons.radio_button_unchecked, color: AppColors.iconSecondary),
+                ? const Icon(Icons.check_circle, color: AppColors.success)
+                : const Icon(Icons.radio_button_unchecked, color: AppColors.iconSecondary),
             onTap: () => _switchProfile(profile.id),
           ),
         );
