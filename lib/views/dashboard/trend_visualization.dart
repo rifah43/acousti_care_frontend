@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class TrendVisualization extends StatefulWidget {
-  const TrendVisualization({Key? key}) : super(key: key);
+  const TrendVisualization({super.key});
 
   @override
   State<TrendVisualization> createState() => _TrendVisualizationState();
@@ -85,7 +85,7 @@ class _TrendVisualizationState extends State<TrendVisualization> {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  topTitles: AxisTitles(
+                  topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
                   leftTitles: AxisTitles(
@@ -245,7 +245,7 @@ class _TrendVisualizationState extends State<TrendVisualization> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomTopBar(
+      appBar: const CustomTopBar(
         title: "Trend Analysis",
         hasDrawer: false,
         hasSettings: false,

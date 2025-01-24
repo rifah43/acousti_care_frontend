@@ -163,7 +163,7 @@ class HealthDataProvider with ChangeNotifier {
         throw const NoDataException('No health data available for analysis');
       }
       if (response.statusCode != 200) {
-        throw HttpException('Failed to fetch health data');
+        throw const HttpException('Failed to fetch health data');
       }
       final data = jsonDecode(response.body);
       if (data == null || data['monthly_analysis'] == null) {

@@ -186,7 +186,7 @@ class _DashboardState extends State<Dashboard> {
                         style: boldTextStyle(context, AppColors.textSecondary),
                       ),
                       const SizedBox(width: 4),
-                      Icon(
+                      const Icon(
                         Icons.arrow_forward,
                         size: 16,
                         color: AppColors.textSecondary,
@@ -211,7 +211,7 @@ class _DashboardState extends State<Dashboard> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.article_outlined,
               size: 64,
               color: AppColors.textSecondary,

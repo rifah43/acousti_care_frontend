@@ -92,7 +92,7 @@ class _HealthRecommendationsState extends State<HealthRecommendations> {
                         margin: const EdgeInsets.only(top: 6),
                         width: 6,
                         height: 6,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: AppColors.textSecondary,
                           shape: BoxShape.circle,
                         ),
@@ -147,7 +147,7 @@ class _HealthRecommendationsState extends State<HealthRecommendations> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.recommend_outlined,
               size: 64,
               color: AppColors.textSecondary,

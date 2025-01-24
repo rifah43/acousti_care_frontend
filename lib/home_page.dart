@@ -199,7 +199,7 @@ class HomePageState extends State<HomePage> {
               children: [
                 _buildWelcomeSection(),
                 const SizedBox(height: 4),
-                Expanded(
+                const Expanded(
                   child: Dashboard(),
                 ),
               ],
