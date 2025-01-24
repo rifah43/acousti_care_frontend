@@ -27,7 +27,8 @@ dependencies:
   html: ^0.15.0
   path_provider_android: ^2.2.10
   url_launcher: ^6.0.13
-  timeago: ^3.0.2
+  timezone: ^0.8.0
+  flutter_local_notifications: ^9.1.5
   webfeed: ^0.7.0
 
 dev_dependencies:

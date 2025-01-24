@@ -1,3 +1,4 @@
+import 'package:acousti_care_frontend/views/settings/notification_settings.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -20,7 +21,11 @@ class SettingsPage extends StatelessWidget {
             title: const Text('Notifications'),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () {
-              // Navigate to notification settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const NotificationSettingsPage()),
+              );
             },
           ),
           ListTile(
@@ -35,4 +40,3 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
-
