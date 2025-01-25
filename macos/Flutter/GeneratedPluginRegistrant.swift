@@ -6,7 +6,7 @@ import FlutterMacOS
 import Foundation
 
 import audio_session
-import device_info_plus
+import device_info_plus_macos
 import flutter_local_notifications
 import just_audio
 import path_provider_foundation

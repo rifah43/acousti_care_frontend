@@ -54,12 +54,10 @@ Future<Map<String, dynamic>> createUser(BuildContext context) async {
     
     if (response.statusCode == 201) {
       final userId = responseBody['user']['user_id'];
-      final token = responseBody['token'];
       
-      if (userId != null && token != null) {
+      if (userId != null) {
         await saveCache(userId.toString());
         await AuthService.saveAuthData(
-          token: token,
           userId: userId.toString(),
         );
         

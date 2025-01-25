@@ -2,24 +2,9 @@ import 'package:cache_manager/cache_manager.dart';
 import 'package:acousti_care_frontend/utils/device_helper.dart';
 
 class AuthService {
-  static const String _tokenKey = 'auth_token';
   static const String _deviceIdKey = 'device_id';
   static const String _userIdKey = 'user_id';
 
-  // Store token using cache manager
-  static Future<void> setToken(String token) async {
-    await WriteCache.setString(key: _tokenKey, value: token);
-  }
-
-  // Get token from cache manager
-  static Future<String?> getToken() async {
-    return await ReadCache.getString(key: _tokenKey);
-  }
-
-  // Remove token from cache manager
-  static Future<void> removeToken() async {
-    await DeleteCache.deleteKey(_tokenKey);
-  }
 
   // Get device ID (uses DeviceHelper)
   static Future<String?> getDeviceId() async {
@@ -58,23 +43,19 @@ class AuthService {
 
   // Clear all auth data
   static Future<void> clearAuth() async {
-    await removeToken();
     await removeUserId();
   }
 
   // Check if user is authenticated
   static Future<bool> isAuthenticated() async {
-    final token = await getToken();
     final userId = await getUserId();
-    return token != null && userId != null;
+    return userId != null;
   }
 
   // Save full auth data (used after successful login/registration)
   static Future<void> saveAuthData({
-    required String token,
     required String userId,
   }) async {
-    await setToken(token);
     await setUserId(userId);
   }
 }

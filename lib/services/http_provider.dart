@@ -30,12 +30,6 @@ class ApiProvider {
       headers['X-Device-ID'] = deviceId;
     }
 
-    // Add auth token if available
-    final token = await AuthService.getToken();
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-
     return headers;
   }
 
@@ -243,8 +237,6 @@ String _parseErrorResponse(http.Response response) {
       case 400:
         throw Exception('Bad request: ${_parseErrorMessage(response.body)}');
       case 401:
-        // Handle token expiration
-        AuthService.removeToken(); // Clear invalid token
         throw Exception('Unauthorized: Please log in again');
       case 403:
         throw Exception('Forbidden: You don\'t have permission to access this resource');

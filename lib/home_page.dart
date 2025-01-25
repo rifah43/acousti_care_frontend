@@ -1,3 +1,4 @@
+import 'package:acousti_care_frontend/views/drawerPages/notification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:acousti_care_frontend/providers/user_provider.dart';
@@ -6,7 +7,6 @@ import 'package:acousti_care_frontend/views/bottom_navbar.dart';
 import 'package:acousti_care_frontend/views/custom_topbar.dart';
 import 'package:acousti_care_frontend/views/dashboard/dashboard.dart';
 import 'package:acousti_care_frontend/views/voiceRecorder/record_voice.dart';
-import 'package:acousti_care_frontend/views/drawerPages/notification_page.dart';
 import 'package:acousti_care_frontend/views/drawerPages/help_support.dart';
 import 'package:acousti_care_frontend/views/drawerPages/feedback_page.dart';
 import 'package:acousti_care_frontend/views/drawerPages/terms_and_privacy.dart';
@@ -89,7 +89,7 @@ class HomePageState extends State<HomePage> {
               title: "Notifications",
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                MaterialPageRoute(builder: (context) => const NotificationListPage()),
               ),
             ),
             _buildDrawerItem(
