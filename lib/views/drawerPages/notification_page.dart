@@ -1,57 +1,10 @@
-import 'package:acousti_care_frontend/views/styles.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:acousti_care_frontend/views/dashboard/trend_visualization.dart';
-import 'package:acousti_care_frontend/views/settings/notification_settings.dart';
-import 'package:acousti_care_frontend/views/voiceRecorder/record_voice.dart';
-
-enum NotificationType { voiceCheck, monthlyReport, healthSuggestion }
-
-class Notification {
-  final String id;
-  final String title;
-  final String message;
-  final DateTime timestamp;
-  final NotificationType type;
-  final bool isRead;
-  final Map<String, dynamic>? additionalData;
-
-  Notification({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    required this.type,
-    this.isRead = false,
-    this.additionalData,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'message': message,
-    'timestamp': timestamp.toIso8601String(),
-    'type': type.toString(),
-    'isRead': isRead,
-    'additionalData': additionalData,
-  };
-
-  factory Notification.fromJson(Map<String, dynamic> json) {
-    return Notification(
-      id: json['id'],
-      title: json['title'],
-      message: json['message'],
-      timestamp: DateTime.parse(json['timestamp']),
-      type: NotificationType.values.firstWhere(
-        (e) => e.toString() == json['type'],
-      ),
-      isRead: json['isRead'] ?? false,
-      additionalData: json['additionalData'],
-    );
-  }
-}
+import 'package:acousti_care_frontend/views/styles.dart';
+import 'package:acousti_care_frontend/views/custom_topbar.dart';
+import 'package:acousti_care_frontend/services/http_provider.dart';
+import 'package:acousti_care_frontend/models/notification.dart';
 
 class NotificationListPage extends StatefulWidget {
   const NotificationListPage({super.key});
@@ -61,8 +14,9 @@ class NotificationListPage extends StatefulWidget {
 }
 
 class _NotificationListPageState extends State<NotificationListPage> {
-  List<Notification> notifications = [];
-  bool isLoading = true;
+  final ApiProvider _api = ApiProvider();
+  List<NotificationClass> _notifications = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -71,187 +25,138 @@ class _NotificationListPageState extends State<NotificationListPage> {
   }
 
   Future<void> _loadNotifications() async {
-    setState(() => isLoading = true);
-    final prefs = await SharedPreferences.getInstance();
-    final notificationsJson = prefs.getString('notifications') ?? '[]';
-    
-    setState(() {
-      notifications = List<Notification>.from(
-        jsonDecode(notificationsJson).map((x) => Notification.fromJson(x))
-      )..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      isLoading = false;
-    });
-  }
-
-  Future<void> _markAsRead(String notificationId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final updatedNotifications = notifications.map((notification) {
-      if (notification.id == notificationId) {
-        return Notification(
-          id: notification.id,
-          title: notification.title,
-          message: notification.message,
-          timestamp: notification.timestamp,
-          type: notification.type,
-          isRead: true,
-          additionalData: notification.additionalData,
+    try {
+      final response = await _api.getRequest('notifications');
+      final List<dynamic> data = json.decode(response.body);
+      setState(() {
+        _notifications = data.map((json) => NotificationClass.fromJson(json)).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading notifications: $e'), backgroundColor: AppColors.error),
         );
       }
-      return notification;
-    }).toList();
-
-    await prefs.setString('notifications', jsonEncode(updatedNotifications));
-    setState(() => notifications = updatedNotifications);
-  }
-
-  void _handleNotificationTap(Notification notification) async {
-    await _markAsRead(notification.id);
-
-    if (!mounted) return;
-
-    switch (notification.type) {
-      case NotificationType.voiceCheck:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const RecordVoice()),
-        );
-        break;
-      case NotificationType.monthlyReport:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const TrendVisualization()),
-        );
-        break;
-      case NotificationType.healthSuggestion:
-        _showHealthSuggestionDialog(notification);
-        break;
     }
   }
 
-  void _showHealthSuggestionDialog(Notification notification) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(notification.title, 
-          style: nameTitleStyle(context, AppColors.textPrimary)),
-        content: SingleChildScrollView(
+  IconData _getNotificationIcon(String type) {
+    switch (type) {
+      case 'daily': return Icons.access_time;
+      case 'monthly': return Icons.calendar_today;
+      case 'health_tip': return Icons.favorite;
+      default: return Icons.notifications;
+    }
+  }
+
+  Future<void> _markAsRead(NotificationClass notification) async {
+    try {
+      await _api.postRequest('notifications/mark-read/${notification.id}', {});
+      setState(() => notification.isRead = true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error marking notification as read: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  Widget _buildNotificationCard(NotificationClass notification) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
+        onTap: () {
+          if (!notification.isRead) {
+            _markAsRead(notification);
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(notification.message,
-                style: normalTextStyle(context, AppColors.textPrimary)),
-              const SizedBox(height: 16),
-              if (notification.additionalData?['link'] != null)
-                ElevatedButton(
-                  style: primaryButtonStyle(),
-                  onPressed: () {
-                    // Launch URL using url_launcher package
-                  },
-                  child: Text('Learn More',
-                    style: normalTextStyle(context, AppColors.buttonText)),
+              Row(
+                children: [
+                  Icon(
+                    _getNotificationIcon(notification.type),
+                    color: notification.isRead 
+                        ? AppColors.textSecondary.withOpacity(0.5)
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      notification.title,
+                      style: nameTitleStyle(context, AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 36),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification.message,
+                      style: normalTextStyle(context, AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('MMM dd, yyyy HH:mm').format(notification.scheduledTime),
+                      style: subtitleStyle(context, AppColors.textSecondary),
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Close',
-              style: normalTextStyle(context, AppColors.textSecondary)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationTile(Notification notification) {
-    final IconData icon;
-    final Color iconColor;
-
-    switch (notification.type) {
-      case NotificationType.voiceCheck:
-        icon = Icons.mic;
-        iconColor = AppColors.iconSecondary;
-        break;
-      case NotificationType.monthlyReport:
-        icon = Icons.assessment;
-        iconColor = AppColors.success;
-        break;
-      case NotificationType.healthSuggestion:
-        icon = Icons.favorite;
-        iconColor = AppColors.alert;
-        break;
-    }
-
-    return Card(
-      elevation: notification.isRead ? 1 : 3,
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: iconColor.withOpacity(0.1),
-          child: Icon(icon, color: iconColor),
-        ),
-        title: Text(
-          notification.title,
-          style: notification.isRead 
-            ? normalTextStyle(context, AppColors.textPrimary)
-            : boldTextStyle(context, AppColors.textPrimary),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              notification.message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: subtitleStyle(context, AppColors.textPrimary),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              DateFormat('MMM d, y HH:mm').format(notification.timestamp),
-              style: subtitleStyle(context, AppColors.textSecondary),
-            ),
-          ],
-        ),
-        onTap: () => _handleNotificationTap(notification),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: AppColors.buttonPrimary)),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        title: Text('Notifications',
-          style: titleStyle(context, AppColors.buttonText)),
-        backgroundColor: AppColors.backgroundSecondary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: AppColors.drawerIcon),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationSettingsPage()),
-            ),
-          ),
-        ],
+      appBar: const CustomTopBar(
+        title: 'Notifications',
+        withBack: true,
+        hasDrawer: false,
+        hasSettings: false,
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(
+      backgroundColor: AppColors.backgroundPrimary,
+      body: _notifications.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.notifications_none, size: 64, color: AppColors.textSecondary),
+                  const SizedBox(height: 16),
+                  Text('No notifications', style: subtitleStyle(context, AppColors.textPrimary)),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadNotifications,
               color: AppColors.buttonPrimary,
-            ))
-          : notifications.isEmpty
-              ? Center(
-                  child: Text('No notifications yet',
-                    style: normalTextStyle(context, AppColors.textPrimary)),
-                )
-              : ListView.builder(
-                  itemCount: notifications.length,
-                  itemBuilder: (context, index) => _buildNotificationTile(
-                    notifications[index],
-                  ),
-                ),
+              child: ListView.builder(
+                itemCount: _notifications.length,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemBuilder: (context, index) => _buildNotificationCard(_notifications[index]),
+              ),
+            ),
     );
   }
 }

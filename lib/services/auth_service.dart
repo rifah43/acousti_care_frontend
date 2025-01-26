@@ -1,5 +1,4 @@
 import 'package:cache_manager/cache_manager.dart';
-import 'package:acousti_care_frontend/utils/device_helper.dart';
 
 class AuthService {
   static const String _deviceIdKey = 'device_id';
@@ -9,12 +8,6 @@ class AuthService {
   // Get device ID (uses DeviceHelper)
   static Future<String?> getDeviceId() async {
     String? deviceId = await ReadCache.getString(key: _deviceIdKey);
-    if (deviceId == null) {
-      deviceId = await DeviceHelper.getDeviceId();
-      if (deviceId != null) {
-        await WriteCache.setString(key: _deviceIdKey, value: deviceId);
-      }
-    }
     return deviceId;
   }
 

@@ -1,32 +1,28 @@
-class Notification {
+class NotificationClass {
   final String id;
+  final String type;
   final String title;
   final String message;
-  final DateTime timestamp;
-  final bool isRead;
+  final DateTime scheduledTime;
+  bool isRead;
 
-  Notification({
+  NotificationClass({
     required this.id,
+    required this.type,
     required this.title,
     required this.message,
-    required this.timestamp,
+    required this.scheduledTime,
     this.isRead = false,
   });
 
-  Notification copyWith({
-    String? id,
-    String? title,
-    String? message,
-    DateTime? timestamp,
-    bool? isRead,
-  }) {
-    return Notification(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      message: message ?? this.message,
-      timestamp: timestamp ?? this.timestamp,
-      isRead: isRead ?? this.isRead,
+  factory NotificationClass.fromJson(Map<String, dynamic> json) {
+    return NotificationClass(
+      id: json['_id'] ?? '',
+      type: json['type'] ?? '',
+      title: json['title'] ?? '',
+      message: json['message'] ?? '',
+      scheduledTime: DateTime.parse(json['scheduled_time']),
+      isRead: json['is_read'] ?? false,
     );
   }
 }
-
